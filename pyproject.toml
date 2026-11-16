@@ -1,0 +1,20 @@
+[project]
+name = "emdg"
+version = "0.1.0"
+description = "Generate a single-page HTML documentation site from Markdown"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+emdg = "emdg.cli:main"
+
+[project.optional-dependencies]
+test = ["pytest>=9.2.0"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["emdg*"]
