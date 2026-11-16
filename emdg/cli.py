@@ -36,6 +36,12 @@ def _arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--theme", choices=("auto", "light", "dark"), default="auto", help="Initial theme"
     )
+    parser.add_argument(
+        "--primary-color",
+        default="#2563eb",
+        metavar="HEX",
+        help="Primary accent color in #RGB or #RRGGBB format",
+    )
     parser.add_argument("--serve", action="store_true", help="Serve the generated site locally")
     parser.add_argument("--watch", action="store_true", help="Rebuild when Markdown files change")
     parser.add_argument("-v", "--verbose", action="count", default=0, help="Increase output")
@@ -65,6 +71,7 @@ def _watch(
     title: str | None,
     theme: str,
     ignore: set[str],
+    primary_color: str = "#2563eb",
 ) -> None:
     previous = _source_snapshot(source, ignore)
     LOGGER.info("Watching %s for Markdown changes", source)
@@ -72,7 +79,13 @@ def _watch(
         time.sleep(WATCH_INTERVAL)
         current = _source_snapshot(source, ignore)
         if current != previous:
-            generate_html(scan_docs(source, ignore=ignore), output, title=title, theme=theme)
+            generate_html(
+                scan_docs(source, ignore=ignore),
+                output,
+                title=title,
+                theme=theme,
+                primary_color=primary_color,
+            )
             LOGGER.info("Rebuilt %s", output)
             previous = current
 
@@ -84,6 +97,7 @@ def _serve(
     title: str | None,
     theme: str,
     ignore: set[str],
+    primary_color: str = "#2563eb",
 ) -> None:
     handler = partial(SimpleHTTPRequestHandler, directory=str(output.parent))
     server = ThreadingHTTPServer(("127.0.0.1", 8000), handler)
@@ -101,7 +115,7 @@ def _serve(
     server_thread = Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
     try:
-        _watch(source, output, title, theme, ignore)
+        _watch(source, output, title, theme, ignore, primary_color)
     except KeyboardInterrupt:
         pass
     finally:
@@ -128,16 +142,30 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         result = scan_docs(source, ignore=ignore)
-        output = generate_html(result, output, title=args.title, theme=args.theme)
-    except OSError as exc:
+        output = generate_html(
+            result,
+            output,
+            title=args.title,
+            theme=args.theme,
+            primary_color=args.primary_color,
+        )
+    except (OSError, ValueError) as exc:
         raise SystemExit(f"emdg: {exc}") from exc
 
     LOGGER.info("Generated %s", output)
     if args.serve:
-        _serve(output, args.watch, source, args.title, args.theme, ignore)
+        _serve(
+            output,
+            args.watch,
+            source,
+            args.title,
+            args.theme,
+            ignore,
+            args.primary_color,
+        )
     elif args.watch:
         try:
-            _watch(source, output, args.title, args.theme, ignore)
+            _watch(source, output, args.title, args.theme, ignore, args.primary_color)
         except KeyboardInterrupt:
             pass
     return 0

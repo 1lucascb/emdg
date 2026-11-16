@@ -28,14 +28,25 @@ def test_cli_default_and_custom_options(tmp_path: Path, monkeypatch) -> None:
             "Custom Title",
             "--theme",
             "light",
+            "--primary-color",
+            "#174ea6",
         ]
     ) == 0
 
     html = output.read_text(encoding="utf-8")
     assert "<title>Custom Title</title>" in html
     assert 'const initialTheme = "light"' in html
+    assert "--accent: #174ea6;" in html
     match = re.search(r"window\.__DOCS__ = (.*?);\s*const formatLabel", html, re.DOTALL)
     assert match and json.loads(match.group(1))["title"] == "Custom Title"
+
+
+def test_cli_rejects_invalid_primary_color(tmp_path: Path) -> None:
+    source = tmp_path / "docs"
+    source.mkdir()
+
+    with pytest.raises(SystemExit, match="primary_color must be a hex color"):
+        main([str(source), "--primary-color", "blue"])
 
 
 def test_watch_rebuilds_when_source_metadata_changes(
@@ -66,11 +77,22 @@ def test_watch_rebuilds_when_source_metadata_changes(
     )
 
     with pytest.raises(KeyboardInterrupt):
-        cli._watch(source, tmp_path / "site.html", "Docs", "dark", set())
+        cli._watch(
+            source,
+            tmp_path / "site.html",
+            "Docs",
+            "dark",
+            set(),
+            "#174ea6",
+        )
 
     assert len(generated) == 1
     assert generated[0][0][0].root == source.resolve()
-    assert generated[0][1] == {"title": "Docs", "theme": "dark"}
+    assert generated[0][1] == {
+        "title": "Docs",
+        "theme": "dark",
+        "primary_color": "#174ea6",
+    }
 
 
 def test_serve_closes_server_after_interrupt(tmp_path: Path, monkeypatch) -> None:

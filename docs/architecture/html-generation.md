@@ -7,7 +7,8 @@ tags: [generator, browser]
 # HTML generation and browser runtime
 
 `generate_html(scan_result, output_path="docs.html", *, title=None,
-theme="auto")` in `emdg.generator` builds the single-file site.
+theme="auto", primary_color="#2563eb")` in `emdg.generator` builds the
+single-file site.
 
 ## Serialization and template assembly
 
@@ -19,11 +20,20 @@ page, root pages, and nested sections.
 The payload is encoded as JSON and assigned to `window.__DOCS__` in the HTML
 template. The generator escapes `</` in serialized content so Markdown cannot
 prematurely close the containing script element. It HTML-escapes the title for
-use in HTML text/attributes, validates that the theme is `auto`, `light`, or
-`dark`, writes UTF-8 output, and returns its resolved `Path`.
+use in HTML text/attributes, validates the theme and primary color, writes
+UTF-8 output, and returns its resolved `Path`.
 
 The output parent directory is not created automatically. Writing fails if it
-does not exist. Invalid themes raise `ValueError`.
+does not exist. Invalid themes and primary colors raise `ValueError`. The
+primary color must use `#RGB` or `#RRGGBB` syntax.
+
+## Theme colors
+
+The CLI accepts the primary accent with `--primary-color`; the API accepts it
+as `primary_color`. The generator derives separate light and dark accent
+variants from that hex color, adjusting the variants to maintain at least 4.5:1
+contrast against their theme backgrounds. The dark theme uses neutral gray
+backgrounds, borders, code surfaces, and tags instead of blue-tinted grays.
 
 ## Browser routing and page rendering
 

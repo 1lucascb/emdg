@@ -40,13 +40,21 @@ and `NotADirectoryError` when the origin is not a directory.
 ## `generate_html`
 
 ```python
-generate_html(scan_result, output_path="docs.html", *, title=None, theme="auto")
+generate_html(
+    scan_result,
+    output_path="docs.html",
+    *,
+    title=None,
+    theme="auto",
+    primary_color="#2563eb",
+)
 ```
 
 `scan_result` is a `ScanResult`. `output_path` defaults to `docs.html`; its
 parent directory must exist. `title` overrides the humanized source directory
-name. `theme` must be `auto`, `light`, or `dark`. The function writes UTF-8
-HTML and returns the resolved output `Path`.
+name. `theme` must be `auto`, `light`, or `dark`. `primary_color` accepts a
+`#RGB` or `#RRGGBB` hex value and determines contrast-adjusted accents for both
+themes. The function writes UTF-8 HTML and returns the resolved output `Path`.
 
 ## Other public helpers
 
