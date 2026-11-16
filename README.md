@@ -250,6 +250,8 @@ Markdown page somewhere below it.
   `[!IMPORTANT]`, `[!WARNING]`, and `[!CAUTION]`. Their styling and the table of
   contents are implemented inline; they add no CDN dependencies.
 - The selected page's description and tags appear above its content.
+- A floating back-to-top button appears after scrolling down the page and uses
+  smooth scrolling unless the browser requests reduced motion.
 - A custom `--primary-color` supplies the accent hue in both themes. Its light
   and dark variants are adjusted for contrast; the dark theme uses neutral gray
   surfaces.
