@@ -12,6 +12,7 @@ pages and sections.
 - Optional frontmatter for page titles, order, descriptions, tags, drafts, and
   section metadata.
 - Light, dark, and system-preference themes.
+- Custom primary accent colors with contrast-adjusted light/dark variants.
 - Optional local HTTP server and automatic rebuild mode.
 - No third-party Python runtime dependencies.
 
@@ -81,7 +82,7 @@ Frontmatter can override a Markdown page's display title.
 
 ```text
 emdg [source] [-o OUTPUT] [-t TITLE] [-i NAME]... [--theme auto|light|dark]
-     [--serve] [--watch] [-v]
+     [--primary-color HEX] [--serve] [--watch] [-v]
 ```
 
 | Option | Default | Description |
@@ -91,6 +92,7 @@ emdg [source] [-o OUTPUT] [-t TITLE] [-i NAME]... [--theme auto|light|dark]
 | `-t`, `--title` | Humanized source directory name | Site title shown in the browser tab and interface. |
 | `-i`, `--ignore NAME` | Built-in ignores | Ignore a file or directory by name. Repeat the option for multiple names. Names are matched anywhere in the source tree, not as paths. |
 | `--theme` | `auto` | Initial theme: `auto` follows the browser's system preference, or choose `light` or `dark`. A theme already saved in that browser takes precedence. |
+| `--primary-color HEX` | `#2563eb` | Primary accent color as `#RGB` or `#RRGGBB`. The generator adjusts it for readable accents in both themes. |
 | `--serve` | Off | Serve the generated output on `http://127.0.0.1:8000/<output-filename>` until interrupted. |
 | `--watch` | Off | Keep running and rebuild after Markdown files are added, removed, or changed. |
 | `-v`, `--verbose` | Off | Print informational messages, including build and watch activity. |
@@ -110,6 +112,9 @@ emdg docs --ignore internal --ignore drafts
 
 # Build using a light theme
 emdg docs --theme light
+
+# Choose a primary accent color
+emdg docs --primary-color "#7c3aed"
 
 # Serve the generated docs and rebuild when Markdown changes
 emdg docs --output site.html --serve --watch
@@ -245,6 +250,9 @@ Markdown page somewhere below it.
   `[!IMPORTANT]`, `[!WARNING]`, and `[!CAUTION]`. Their styling and the table of
   contents are implemented inline; they add no CDN dependencies.
 - The selected page's description and tags appear above its content.
+- A custom `--primary-color` supplies the accent hue in both themes. Its light
+  and dark variants are adjusted for contrast; the dark theme uses neutral gray
+  surfaces.
 - A saved theme choice is kept in browser `localStorage` under `emdg-theme`.
   This saved choice takes precedence over the generated `--theme` default.
 - Standard Markdown is rendered in the browser by Marked. Fenced code blocks
@@ -271,6 +279,7 @@ output = generate_html(
     "public/docs.html",
     title="Team Handbook",
     theme="dark",
+    primary_color="#7c3aed",
 )
 print(output)
 ```
@@ -298,7 +307,14 @@ scan_docs(origin, *, ignore=None, extensions=(".md",))
 ### `generate_html`
 
 ```python
-generate_html(scan_result, output_path="docs.html", *, title=None, theme="auto")
+generate_html(
+    scan_result,
+    output_path="docs.html",
+    *,
+    title=None,
+    theme="auto",
+    primary_color="#2563eb",
+)
 ```
 
 - `scan_result` is the result of `scan_docs`.
@@ -306,6 +322,8 @@ generate_html(scan_result, output_path="docs.html", *, title=None, theme="auto")
 - `title` overrides the site title. By default, the scan root's directory name
   is humanized.
 - `theme` must be `auto`, `light`, or `dark`.
+- `primary_color` must be a `#RGB` or `#RRGGBB` hex color. The generator
+  derives contrast-adjusted accent colors for light and dark backgrounds.
 - Writes UTF-8 HTML and returns the resolved output `Path`.
 
 The public package also exports `Frontmatter`, `DocItem`, `DocSection`,
