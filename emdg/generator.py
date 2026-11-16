@@ -27,8 +27,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       --border: #e2e8f0;
       --text: #0f172a;
       --text-muted: #64748b;
-      --accent: #2563eb;
-      --accent-soft: #eff6ff;
+      --accent: __PRIMARY_ACCENT_LIGHT__;
+      --accent-soft: __PRIMARY_SOFT_LIGHT__;
       --code-bg: #1e293b;
       --tag-bg: #e2e8f0;
       --callout-tip: #059669;
@@ -38,15 +38,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       color-scheme: light;
     }
     [data-theme="dark"] {
-      --bg: #0b1120;
-      --bg-sidebar: #0f172a;
-      --border: #1e293b;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --accent: #60a5fa;
-      --accent-soft: #1e293b;
-      --code-bg: #020617;
-      --tag-bg: #1e293b;
+      --bg: #181818;
+      --bg-sidebar: #202020;
+      --border: #383838;
+      --text: #f1f1f1;
+      --text-muted: #a3a3a3;
+      --accent: __PRIMARY_ACCENT_DARK__;
+      --accent-soft: __PRIMARY_SOFT_DARK__;
+      --code-bg: #242424;
+      --tag-bg: #303030;
       --callout-tip: #34d399;
       --callout-important: #c4b5fd;
       --callout-warning: #fbbf24;
@@ -144,14 +144,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
     .doc-meta {
       margin: 0 auto 2rem;
-      max-width: 52rem;
+      max-width: 62.4rem;
       padding: 1.25rem 1.5rem;
       border: 1px solid var(--border);
       border-radius: 1rem;
       background: var(--bg-sidebar);
     }
     .toc {
-      max-width: 52rem;
+      max-width: 62.4rem;
       margin: 0 auto 2rem;
       padding: 1rem 1.25rem;
       border: 1px solid var(--border);
@@ -172,7 +172,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     #tocLinks a { color: var(--accent); text-decoration: none; }
     #tocLinks a:hover { text-decoration: underline; }
     .home-footer {
-      max-width: 52rem;
+      max-width: 62.4rem;
       margin: 3rem auto 0;
       padding-top: 1rem;
       border-top: 1px solid var(--border);
@@ -189,7 +189,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       color: var(--text-muted);
     }
     #content {
-      max-width: 52rem;
+      max-width: 62.4rem;
       margin: 0 auto;
       line-height: 1.65;
     }
@@ -654,16 +654,105 @@ def _serialize_section(section: DocSection) -> dict:
     }
 
 
+def _parse_hex_color(value: str) -> tuple[int, int, int]:
+    if not re.fullmatch(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})", value):
+        raise ValueError("primary_color must be a hex color in #RGB or #RRGGBB format")
+    digits = value[1:]
+    if len(digits) == 3:
+        digits = "".join(char * 2 for char in digits)
+    return (
+        int(digits[0:2], 16),
+        int(digits[2:4], 16),
+        int(digits[4:6], 16),
+    )
+
+
+def _format_hex_color(color: tuple[int, int, int]) -> str:
+    return "#" + "".join(f"{channel:02x}" for channel in color)
+
+
+def _relative_luminance(color: tuple[int, int, int]) -> float:
+    channels: list[float] = []
+    for channel in color:
+        value = channel / 255
+        channels.append(
+            value / 12.92
+            if value <= 0.04045
+            else ((value + 0.055) / 1.055) ** 2.4
+        )
+    return sum(
+        weight * channel
+        for weight, channel in zip((0.2126, 0.7152, 0.0722), channels)
+    )
+
+
+def _contrast_ratio(
+    first: tuple[int, int, int], second: tuple[int, int, int]
+) -> float:
+    lighter, darker = sorted(
+        (_relative_luminance(first), _relative_luminance(second)), reverse=True
+    )
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _mix_color(
+    color: tuple[int, int, int], target: tuple[int, int, int], target_weight: float
+) -> tuple[int, int, int]:
+    return (
+        round(color[0] * (1 - target_weight) + target[0] * target_weight),
+        round(color[1] * (1 - target_weight) + target[1] * target_weight),
+        round(color[2] * (1 - target_weight) + target[2] * target_weight),
+    )
+
+
+def _accent_for_background(
+    primary: tuple[int, int, int], background: tuple[int, int, int]
+) -> tuple[int, int, int]:
+    if _contrast_ratio(primary, background) >= 4.5:
+        return primary
+
+    endpoint = (
+        (0, 0, 0)
+        if _relative_luminance(background) > 0.5
+        else (255, 255, 255)
+    )
+    lower, upper = 0.0, 1.0
+    for _ in range(24):
+        weight = (lower + upper) / 2
+        candidate = _mix_color(primary, endpoint, weight)
+        if _contrast_ratio(candidate, background) >= 4.55:
+            upper = weight
+        else:
+            lower = weight
+    return _mix_color(primary, endpoint, upper)
+
+
+def _accent_palette(primary_color: str) -> dict[str, str]:
+    primary = _parse_hex_color(primary_color)
+    light_soft = _mix_color(primary, (255, 255, 255), 0.94)
+    dark_soft = _mix_color(primary, (40, 40, 40), 0.94)
+    light = _accent_for_background(primary, light_soft)
+    dark = _accent_for_background(primary, dark_soft)
+    return {
+        "__PRIMARY_ACCENT_LIGHT__": _format_hex_color(light),
+        "__PRIMARY_ACCENT_DARK__": _format_hex_color(dark),
+        "__PRIMARY_SOFT_LIGHT__": _format_hex_color(light_soft),
+        "__PRIMARY_SOFT_DARK__": _format_hex_color(dark_soft),
+    }
+
+
 def generate_html(
     scan_result: ScanResult,
     output_path: str | Path = "docs.html",
     *,
     title: str | None = None,
     theme: str = "auto",
+    primary_color: str = "#2563eb",
 ) -> Path:
     """Build a single-file HTML documentation page from a ScanResult."""
     if theme not in {"auto", "light", "dark"}:
         raise ValueError("theme must be 'auto', 'light', or 'dark'")
+    accent_palette = _accent_palette(primary_color)
 
     site_title = title or humanize_name(scan_result.root.name)
 
@@ -684,9 +773,12 @@ def generate_html(
         "__SITE_TITLE__": html.escape(site_title, quote=True),
         "__DOCS_JSON__": safe_json,
         "__INITIAL_THEME__": theme,
+        **accent_palette,
     }
     final_html = re.sub(
-        r"__SITE_TITLE__|__DOCS_JSON__|__INITIAL_THEME__",
+        r"__SITE_TITLE__|__DOCS_JSON__|__INITIAL_THEME__|"
+        r"__PRIMARY_ACCENT_LIGHT__|__PRIMARY_ACCENT_DARK__|"
+        r"__PRIMARY_SOFT_LIGHT__|__PRIMARY_SOFT_DARK__",
         lambda match: replacements[match.group(0)],
         HTML_TEMPLATE,
     )

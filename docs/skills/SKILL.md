@@ -61,7 +61,7 @@ module entry point is also available with `python -m emdg`.
 
 ```text
 emdg [source] [-o OUTPUT] [-t TITLE] [-i NAME]... [--theme auto|light|dark]
-     [--serve] [--watch] [-v]
+     [--primary-color HEX] [--serve] [--watch] [-v]
 ```
 
 | Argument | Default | Behavior |
@@ -71,6 +71,7 @@ emdg [source] [-o OUTPUT] [-t TITLE] [-i NAME]... [--theme auto|light|dark]
 | `-t`, `--title` | Humanized source directory name | Site title shown in the generated interface and browser title. This option is optional. |
 | `-i NAME`, `--ignore NAME` | Built-in ignores | Ignore a file or directory by exact name anywhere under the source, not by relative path. Repeat to add names. |
 | `--theme` | `auto` | Initial theme: `auto` follows the browser preference, or use `light` or `dark`. A theme saved in browser `localStorage` takes precedence. |
+| `--primary-color HEX` | `#2563eb` | Accent hue as `#RGB` or `#RRGGBB`; adjusted for contrast in light and dark themes. |
 | `--serve` | Off | Serve the generated output on loopback at `http://127.0.0.1:8000/<output-filename>`. This is for local preview, not public hosting. |
 | `--watch` | Off | Poll for Markdown file additions, removals, or changes about twice per second, then rebuild the same output. |
 | `-v` | Off | Increase log verbosity; repeat (`-vv`) for debug logging. |
@@ -90,6 +91,9 @@ emdg docs --ignore internal --ignore drafts
 
 # Build with a dark initial theme
 emdg docs --theme dark
+
+# Choose a primary accent color
+emdg docs --primary-color "#7c3aed"
 
 # Serve the built file and rebuild when Markdown changes
 emdg docs --output site.html --serve --watch
@@ -263,6 +267,7 @@ output = generate_html(
     "public/docs.html",
     title="Team Handbook",
     theme="dark",
+    primary_color="#7c3aed",
 )
 ```
 
@@ -270,7 +275,14 @@ Key signatures:
 
 ```python
 scan_docs(origin, *, ignore=None, extensions=(".md",))
-generate_html(scan_result, output_path="docs.html", *, title=None, theme="auto")
+generate_html(
+    scan_result,
+    output_path="docs.html",
+    *,
+    title=None,
+    theme="auto",
+    primary_color="#2563eb",
+)
 parse_frontmatter(content)  # -> (Frontmatter, body_without_frontmatter)
 ```
 
@@ -286,7 +298,7 @@ parse_frontmatter(content)  # -> (Frontmatter, body_without_frontmatter)
   subsections, and optional landing `body`.
 - `generate_html` requires the output parent directory to exist, writes UTF-8
   HTML, and returns the resolved output `Path`. `theme` must be `auto`, `light`,
-  or `dark`.
+  or `dark`. `primary_color` must be a `#RGB` or `#RRGGBB` hex value.
 
 ## This repository's local build helper
 

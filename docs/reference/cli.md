@@ -10,7 +10,7 @@ The `emdg` console script and `python -m emdg` invoke the same CLI.
 
 ```text
 emdg [source] [-o OUTPUT] [-t TITLE] [-i NAME]... [--theme auto|light|dark]
-     [--serve] [--watch] [-v]
+     [--primary-color HEX] [--serve] [--watch] [-v]
 ```
 
 | Argument | Default | Behavior |
@@ -20,6 +20,7 @@ emdg [source] [-o OUTPUT] [-t TITLE] [-i NAME]... [--theme auto|light|dark]
 | `-t`, `--title` | Humanized source directory name | Site title shown in the generated interface and browser title. |
 | `-i NAME`, `--ignore NAME` | Built-in ignores | Add an exact filename or directory name to ignore. Repeatable; matches at any depth. |
 | `--theme` | `auto` | Initial theme: browser preference, `light`, or `dark`. A saved browser choice takes precedence. |
+| `--primary-color HEX` | `#2563eb` | Accent hue as `#RGB` or `#RRGGBB`, adjusted for contrast in both themes. |
 | `--serve` | Off | Serve the generated file at `http://127.0.0.1:8000/<filename>`. |
 | `--watch` | Off | Rebuild after Markdown source files change, without or with `--serve`. |
 | `-v` | Off | Increase log verbosity; repeat for debug output. |
@@ -39,6 +40,9 @@ emdg docs --ignore internal --ignore drafts
 
 # Build with a dark initial theme
 emdg docs --theme dark
+
+# Choose an accent hue for both themes
+emdg docs --primary-color "#7c3aed"
 ```
 
 ## Watch and serve
@@ -52,6 +56,9 @@ local preview, not public hosting. `--serve` without `--watch` serves only the
 initial build. `--watch` without `--serve` rebuilds without starting a server.
 Press Ctrl+C to stop either long-running mode.
 
-Source validation and output write `OSError`s are reported as CLI errors. The
-scanner's default and hidden-entry ignore rules are documented in
+Source validation and output write `OSError`s, as well as invalid primary
+colors, are reported as CLI errors. The scanner's default and hidden-entry
+ignore rules are documented in
 [Scanning and document model](#/architecture/scanning-and-model).
+The dark theme uses neutral gray surfaces; the selected primary color is
+adjusted to keep accent text readable on both light and dark backgrounds.

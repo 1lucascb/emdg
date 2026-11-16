@@ -15,6 +15,21 @@ def _payload(html: str) -> dict:
     return json.loads(match.group(1))
 
 
+def _contrast_ratio(first: str, second: str) -> float:
+    def luminance(color: str) -> float:
+        channels = [int(color[index : index + 2], 16) / 255 for index in (1, 3, 5)]
+        linear = [
+            channel / 12.92
+            if channel <= 0.04045
+            else ((channel + 0.055) / 1.055) ** 2.4
+            for channel in channels
+        ]
+        return sum(weight * channel for weight, channel in zip((0.2126, 0.7152, 0.0722), linear))
+
+    lighter, darker = sorted((luminance(first), luminance(second)), reverse=True)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
 def test_generates_html_payload_with_markdown_and_mermaid(tmp_path: Path) -> None:
     (tmp_path / "diagram.md").write_text(
         "---\ntitle: Diagram\ntags: [flow]\n---\n"
@@ -135,9 +150,53 @@ def test_empty_directory_and_theme_override(tmp_path: Path) -> None:
     assert _payload(html)["root_items"] == []
 
 
+def test_custom_primary_color_supports_neutral_light_and_dark_themes(
+    tmp_path: Path,
+) -> None:
+    output = generate_html(
+        scan_docs(tmp_path),
+        tmp_path / "site.html",
+        primary_color="#174ea6",
+    )
+
+    html = output.read_text(encoding="utf-8")
+    accents = re.findall(r"--accent: (#[0-9a-f]{6});", html)
+    assert accents[0] == "#174ea6"
+    assert accents[1] != accents[0]
+    assert "--bg: #181818;" in html
+    assert "--bg-sidebar: #202020;" in html
+    assert "__PRIMARY_" not in html
+
+
 def test_rejects_unknown_theme(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="theme"):
         generate_html(scan_docs(tmp_path), tmp_path / "site.html", theme="blue")
+
+
+def test_rejects_invalid_primary_color(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="primary_color"):
+        generate_html(scan_docs(tmp_path), tmp_path / "site.html", primary_color="blue")
+
+
+@pytest.mark.parametrize("primary_color", ["#fff", "#000", "#f00", "#174ea6"])
+def test_primary_color_accents_meet_contrast_threshold(
+    tmp_path: Path, primary_color: str
+) -> None:
+    output = generate_html(
+        scan_docs(tmp_path),
+        tmp_path / "site.html",
+        primary_color=primary_color,
+    )
+    html = output.read_text(encoding="utf-8")
+    light = re.search(r":root \{(.*?)\}", html, re.DOTALL)
+    dark = re.search(r'\[data-theme="dark"\] \{(.*?)\}', html, re.DOTALL)
+    assert light and dark
+
+    for theme in (light.group(1), dark.group(1)):
+        accent = re.search(r"--accent: (#[0-9a-f]{6});", theme)
+        soft = re.search(r"--accent-soft: (#[0-9a-f]{6});", theme)
+        assert accent and soft
+        assert _contrast_ratio(accent.group(1), soft.group(1)) >= 4.5
 
 
 def test_escapes_title_in_html_attributes(tmp_path: Path) -> None:

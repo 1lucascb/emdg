@@ -1,6 +1,6 @@
 [project]
 name = "emdg"
-version = "0.1.1"
+version = "0.2.0"
 description = "Generate a single-page HTML documentation site from Markdown"
 readme = "README.md"
 requires-python = ">=3.13"
