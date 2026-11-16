@@ -37,6 +37,11 @@ To install an editable checkout with the test dependency:
 python -m pip install -e ".[test]"
 ```
 
+## AI agent skill
+
+The [emdg documentation skill](docs/skills/SKILL.md) guides AI agents in
+organizing docs and using the CLI, including frontmatter and build workflows.
+
 ## Quick start
 
 Given a project like:
