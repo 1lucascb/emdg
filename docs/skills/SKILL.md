@@ -43,13 +43,14 @@ generated site does not fetch the Markdown sources after it is built.
 
 ## Installation and command line
 
-Install from a local checkout:
+Install the published package:
 
 ```console
-python -m pip install .
+pip install emdg
 ```
 
-Install editable with the test dependency during development:
+For development and tests, install the checkout in editable mode with its test
+dependency:
 
 ```console
 python -m pip install -e ".[test]"

@@ -19,10 +19,10 @@ pages and sections.
 
 Python 3.13 or newer is required.
 
-Install `emdg` from a local checkout:
+Install the published package:
 
 ```console
-python -m pip install .
+pip install emdg
 ```
 
 Then run it from any directory:
