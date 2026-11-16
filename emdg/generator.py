@@ -144,14 +144,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
     .doc-meta {
       margin: 0 auto 2rem;
-      max-width: 52rem;
+      max-width: 62.4rem;
       padding: 1.25rem 1.5rem;
       border: 1px solid var(--border);
       border-radius: 1rem;
       background: var(--bg-sidebar);
     }
     .toc {
-      max-width: 52rem;
+      max-width: 62.4rem;
       margin: 0 auto 2rem;
       padding: 1rem 1.25rem;
       border: 1px solid var(--border);
@@ -172,7 +172,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     #tocLinks a { color: var(--accent); text-decoration: none; }
     #tocLinks a:hover { text-decoration: underline; }
     .home-footer {
-      max-width: 52rem;
+      max-width: 62.4rem;
       margin: 3rem auto 0;
       padding-top: 1rem;
       border-top: 1px solid var(--border);
@@ -189,7 +189,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       color: var(--text-muted);
     }
     #content {
-      max-width: 52rem;
+      max-width: 62.4rem;
       margin: 0 auto;
       line-height: 1.65;
     }
