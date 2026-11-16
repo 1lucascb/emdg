@@ -234,6 +234,11 @@ Markdown page somewhere below it.
 - If a section has Markdown body content in `_section.md`, selecting its heading
   displays that content in the main pane as a section landing page.
 - The home page footer shows when the site was generated, using a UTC timestamp.
+- Pages with `##` or `###` headings get an automatic "On this page" table of
+  contents with in-page links.
+- GitHub-style blockquote callouts are supported: `[!NOTE]`, `[!TIP]`,
+  `[!IMPORTANT]`, `[!WARNING]`, and `[!CAUTION]`. Their styling and the table of
+  contents are implemented inline; they add no CDN dependencies.
 - The selected page's description and tags appear above its content.
 - A saved theme choice is kept in browser `localStorage` under `emdg-theme`.
   This saved choice takes precedence over the generated `--theme` default.

@@ -84,6 +84,27 @@ def test_section_helper_body_is_available_on_section_route(tmp_path: Path) -> No
     assert "if (!sec.body || !sec.body.trim()) return" in html
 
 
+def test_generated_pages_include_local_toc_and_callout_rendering(tmp_path: Path) -> None:
+    (tmp_path / "guide.md").write_text(
+        "# Guide\n\n## Setup\n\nDetails.\n\n## Setup\n\nMore details.\n\n"
+        "> [!WARNING]\n> Be careful.\n",
+        encoding="utf-8",
+    )
+
+    output = generate_html(scan_docs(tmp_path), tmp_path / "site.html")
+    html = output.read_text(encoding="utf-8")
+    body = _payload(html)["root_items"][0]["body"]
+
+    assert "## Setup" in body
+    assert "> [!WARNING]" in body
+    assert 'id="tableOfContents"' in html
+    assert "function renderTableOfContents(page)" in html
+    assert "heading-${base}-${suffix++}" in html
+    assert "function enhanceCallouts()" in html
+    assert 'callout-${type}' in html
+    assert ".callout-warning" in html
+
+
 def test_escapes_script_closers_in_embedded_markdown(tmp_path: Path) -> None:
     (tmp_path / "injection.md").write_text(
         "Before </script><script>alert(1)</script> after\n"

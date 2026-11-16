@@ -31,6 +31,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       --accent-soft: #eff6ff;
       --code-bg: #1e293b;
       --tag-bg: #e2e8f0;
+      --callout-tip: #059669;
+      --callout-important: #7c3aed;
+      --callout-warning: #d97706;
+      --callout-caution: #dc2626;
       color-scheme: light;
     }
     [data-theme="dark"] {
@@ -43,6 +47,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       --accent-soft: #1e293b;
       --code-bg: #020617;
       --tag-bg: #1e293b;
+      --callout-tip: #34d399;
+      --callout-important: #c4b5fd;
+      --callout-warning: #fbbf24;
+      --callout-caution: #f87171;
       color-scheme: dark;
     }
     body {
@@ -142,6 +150,27 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       border-radius: 1rem;
       background: var(--bg-sidebar);
     }
+    .toc {
+      max-width: 52rem;
+      margin: 0 auto 2rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      background: var(--bg-sidebar);
+    }
+    .toc-title {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    #tocLinks { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    #tocLinks li { margin: 0.25rem 0; }
+    #tocLinks .toc-level-3 { margin-left: 1rem; }
+    #tocLinks a { color: var(--accent); text-decoration: none; }
+    #tocLinks a:hover { text-decoration: underline; }
     .home-footer {
       max-width: 52rem;
       margin: 3rem auto 0;
@@ -231,6 +260,23 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       border-radius: 0 0.65rem 0.65rem 0;
       background: var(--accent-soft);
     }
+    #content blockquote.callout {
+      border-left-color: var(--callout-color);
+      background: color-mix(in srgb, var(--callout-color) 9%, var(--bg));
+    }
+    #content .callout-note { --callout-color: var(--accent); }
+    #content .callout-tip { --callout-color: var(--callout-tip); }
+    #content .callout-important { --callout-color: var(--callout-important); }
+    #content .callout-warning { --callout-color: var(--callout-warning); }
+    #content .callout-caution { --callout-color: var(--callout-caution); }
+    #content .callout-title {
+      margin: 0 0 0.35rem;
+      color: var(--callout-color);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
     .mermaid {
       display: flex;
       justify-content: center;
@@ -270,6 +316,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       <p id="docDesc" class="doc-desc"></p>
       <div id="docTags" class="tags"></div>
     </div>
+    <nav id="tableOfContents" class="toc" aria-label="On this page" hidden>
+      <p class="toc-title">On this page</p>
+      <ol id="tocLinks"></ol>
+    </nav>
     <article id="content"></article>
     <footer id="homeFooter" class="home-footer" hidden>
       Last updated at: <time id="lastUpdated"></time>
@@ -309,8 +359,77 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     const tagsEl = document.getElementById("docTags");
     const homeFooterEl = document.getElementById("homeFooter");
     const lastUpdatedEl = document.getElementById("lastUpdated");
+    const tocEl = document.getElementById("tableOfContents");
+    const tocLinksEl = document.getElementById("tocLinks");
     const searchEl = document.getElementById("search");
     const openSections = new Set();
+
+    function routeSlugFromHash() {
+      return decodeURIComponent(location.hash.replace(/^#\\/?/, "").split("#", 1)[0]);
+    }
+
+    function headingIdFromHash() {
+      const parts = location.hash.split("#");
+      return parts.length > 2 ? decodeURIComponent(parts.slice(2).join("#")) : "";
+    }
+
+    function renderTableOfContents(page) {
+      const headings = [...contentEl.querySelectorAll("h2, h3")];
+      const usedIds = new Set();
+      tocLinksEl.replaceChildren();
+
+      headings.forEach((heading, index) => {
+        const base = heading.textContent
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9 -]/g, "")
+          .replace(/ +/g, "-")
+          .replace(/-+/g, "-") || `section-${index + 1}`;
+        let id = `heading-${base}`;
+        let suffix = 2;
+        while (usedIds.has(id)) id = `heading-${base}-${suffix++}`;
+        usedIds.add(id);
+        heading.id = id;
+
+        const item = document.createElement("li");
+        if (heading.tagName === "H3") item.className = "toc-level-3";
+        const link = document.createElement("a");
+        link.href = `#/${page.slug}#${encodeURIComponent(id)}`;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        tocLinksEl.appendChild(item);
+      });
+
+      tocEl.hidden = headings.length === 0;
+    }
+
+    function enhanceCallouts() {
+      const types = new Set(["NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"]);
+      contentEl.querySelectorAll("blockquote").forEach((quote) => {
+        const paragraph = quote.querySelector("p");
+        const marker = paragraph &&
+          paragraph.textContent.match(/^\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\\]/i);
+        if (!marker || !types.has(marker[1].toUpperCase())) return;
+
+        const type = marker[1].toLowerCase();
+        quote.classList.add("callout", `callout-${type}`);
+        const label = document.createElement("div");
+        label.className = "callout-title";
+        label.textContent = type;
+        quote.prepend(label);
+
+        let charactersToRemove = marker[0].length;
+        const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+        let textNode = walker.nextNode();
+        while (textNode && charactersToRemove > 0) {
+          const count = Math.min(charactersToRemove, textNode.textContent.length);
+          textNode.textContent = textNode.textContent.slice(count);
+          charactersToRemove -= count;
+          textNode = walker.nextNode();
+        }
+        if (!paragraph.textContent.trim()) paragraph.remove();
+      });
+    }
 
     function renderSidebar(filter = "") {
       const q = filter.trim().toLowerCase();
@@ -394,7 +513,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
 
     function highlightActiveLink() {
-      const currentSlug = decodeURIComponent(location.hash.replace(/^#\\/?/, ""));
+      const currentSlug = routeSlugFromHash();
       document.querySelectorAll(".nav-link").forEach((el) => {
         el.classList.toggle("active", el.dataset.slug === currentSlug);
         if (el.dataset.slug !== currentSlug) return;
@@ -418,11 +537,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       const page = pagesBySlug.get(slug) || sectionsBySlug.get(slug) || pagesBySlug.get(firstSlug);
 
       if (!page) {
+        tocEl.hidden = true;
         contentEl.innerHTML = '<div class="empty-state"><h1>No Markdown files found</h1><p>Add some .md files and rebuild to get started.</p></div>';
         return;
       }
 
-      if (location.hash !== `#/${page.slug}`) {
+      if (routeSlugFromHash() !== page.slug) {
         history.replaceState(null, "", `#/${page.slug}`);
       }
 
@@ -453,6 +573,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       }
 
       contentEl.innerHTML = marked.parse(page.body);
+      renderTableOfContents(page);
+      enhanceCallouts();
 
       // Convert ```mermaid code blocks into <div class="mermaid">
       contentEl.querySelectorAll("pre code.language-mermaid").forEach((codeBlock) => {
@@ -473,7 +595,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       }
 
       highlightActiveLink();
-      window.scrollTo(0, 0);
+      const heading = document.getElementById(headingIdFromHash());
+      if (heading && contentEl.contains(heading)) heading.scrollIntoView();
+      else window.scrollTo(0, 0);
     }
 
     // Theme handling
@@ -493,12 +617,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     mermaid.initialize({ startOnLoad: false, theme: "default" });
     searchEl.addEventListener("input", (e) => renderSidebar(e.target.value));
     window.addEventListener("hashchange", () => {
-      const slug = decodeURIComponent(location.hash.replace(/^#\\/?/, ""));
-      renderPage(slug);
+      renderPage(routeSlugFromHash());
     });
 
     renderSidebar();
-    renderPage(decodeURIComponent(location.hash.replace(/^#\\/?/, "")));
+    renderPage(routeSlugFromHash());
   </script>
 </body>
 </html>
