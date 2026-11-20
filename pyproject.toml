@@ -1,6 +1,6 @@
 [project]
 name = "emdg"
-version = "0.2.0"
+version = "0.3.0"
 description = "Generate a single-page HTML documentation site from Markdown"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -18,3 +18,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["emdg*"]
+
+[tool.setuptools.package-data]
+emdg = ["template.html"]
