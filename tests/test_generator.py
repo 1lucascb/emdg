@@ -60,6 +60,27 @@ def test_generates_html_payload_with_markdown_and_mermaid(tmp_path: Path) -> Non
     assert payload["root_items"][0]["tags"] == ["flow"]
 
 
+def test_markdown_file_links_are_resolved_against_embedded_source_paths(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "guide" / "start.md").parent.mkdir()
+    (tmp_path / "guide" / "start.md").write_text(
+        'See [imports](../ref/imports.md#examples).\n', encoding="utf-8"
+    )
+    (tmp_path / "ref" / "imports.md").parent.mkdir()
+    (tmp_path / "ref" / "imports.md").write_text("# Imports\n", encoding="utf-8")
+
+    output = generate_html(scan_docs(tmp_path), tmp_path / "site.html")
+    html = output.read_text(encoding="utf-8")
+    payload = _payload(html)
+
+    guide = payload["sections"][0]["items"][0]
+    assert guide["path"] == "guide/start.md"
+    assert payload["sections"][1]["items"][0]["path"] == "ref/imports.md"
+    assert "function rewriteMarkdownLinks(page)" in html
+    assert 'link.href = `#/${destination.slug}${fragment}`' in html
+
+
 def test_root_readme_is_default_home_and_title_link_target(tmp_path: Path) -> None:
     (tmp_path / "README.md").write_text("# Home page\n", encoding="utf-8")
     (tmp_path / "overview.md").write_text("# Overview\n", encoding="utf-8")
@@ -101,6 +122,24 @@ def test_section_helper_body_is_available_on_section_route(tmp_path: Path) -> No
     assert "sectionsBySlug.set(sec.slug, sec)" in html
     assert "sectionsBySlug.get(slug)" in html
     assert "if (!sec.body || !sec.body.trim()) return" in html
+
+
+def test_mobile_menu_stays_open_for_section_navigation_and_closes_for_pages(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "guide" / "_section.md").parent.mkdir()
+    (tmp_path / "guide" / "_section.md").write_text(
+        "# Guide overview\n", encoding="utf-8"
+    )
+    (tmp_path / "guide" / "page.md").write_text("# Page\n", encoding="utf-8")
+
+    output = generate_html(scan_docs(tmp_path), tmp_path / "site.html")
+    html = output.read_text(encoding="utf-8")
+
+    assert 'window.matchMedia("(max-width: 860px)")' in html
+    assert "if (mobileViewport.matches) setMobileMenu(false)" in html
+    assert "if (!wasOpen) group.open = true;" in html
+    assert "setMobileMenu(false);\n            const targetHash" not in html
 
 
 def test_generated_pages_include_local_toc_and_callout_rendering(tmp_path: Path) -> None:

@@ -643,6 +643,7 @@
     const tocLinksEl = document.getElementById("tocLinks");
     const searchEl = document.getElementById("search");
     const backToTopEl = document.getElementById("backToTop");
+    const mobileViewport = window.matchMedia("(max-width: 860px)");
     const openSections = new Set();
 
     function setMobileMenu(open) {
@@ -696,6 +697,43 @@
       });
 
       tocEl.hidden = headings.length === 0;
+    }
+
+    function rewriteMarkdownLinks(page) {
+      const pagesByPath = new Map();
+      const addPage = (item) => {
+        if (item && item.path) pagesByPath.set(item.path.toLowerCase(), item);
+      };
+      addPage(window.__DOCS__.home);
+      const addItems = (items) => items.forEach(addPage);
+      addItems(window.__DOCS__.root_items);
+      const addSections = (sections) => sections.forEach((section) => {
+        addItems(section.items);
+        addSections(section.subsections);
+      });
+      addSections(window.__DOCS__.sections);
+
+      contentEl.querySelectorAll("a[href]").forEach((link) => {
+        const href = link.getAttribute("href");
+        if (!href || !/\.md(?:[?#]|$)/i.test(href)) return;
+        let target;
+        try {
+          target = new URL(href, `https://emdg.invalid/${page.path}`);
+        } catch (_) {
+          return;
+        }
+        if (target.origin !== "https://emdg.invalid") return;
+        let sourcePath;
+        try {
+          sourcePath = decodeURIComponent(target.pathname.replace(/^\//, "")).toLowerCase();
+        } catch (_) {
+          return;
+        }
+        const destination = pagesByPath.get(sourcePath);
+        if (!destination) return;
+        const fragment = target.hash ? `#${encodeURIComponent(decodeURIComponent(target.hash.slice(1)))}` : "";
+        link.href = `#/${destination.slug}${fragment}`;
+      });
     }
 
     function enhanceCallouts() {
@@ -768,7 +806,9 @@
         a.className = "nav-link";
         a.dataset.slug = item.slug;
         a.textContent = formatLabel(item);
-        a.addEventListener("click", () => setMobileMenu(false));
+        a.addEventListener("click", () => {
+          if (mobileViewport.matches) setMobileMenu(false);
+        });
         return a;
       };
 
@@ -816,7 +856,6 @@
           const wasOpen = group.open;
           setTimeout(() => {
             if (!wasOpen) group.open = true;
-            setMobileMenu(false);
             const targetHash = `#/${sec.slug}`;
             if (location.hash === targetHash) renderPage(sec.slug);
             else location.hash = `/${sec.slug}`;
@@ -903,6 +942,7 @@
       }
 
       contentEl.innerHTML = marked.parse(page.body);
+      rewriteMarkdownLinks(page);
       renderTableOfContents(page);
       enhanceCallouts();
 
