@@ -46,8 +46,9 @@ def test_generates_html_payload_with_markdown_and_mermaid(tmp_path: Path) -> Non
     assert '<script src="https://cdn.tailwindcss.com"></script>' in html
     assert 'class="app-sidebar flex w-72' in html
     assert "brand-mark" not in html
-    assert "<svg" not in html
     assert ".empty-state" in html
+    assert ".code-wrapper" in html
+    assert "function enhanceCodeBlocks()" in html
     assert 'document.createElement("details")' in html
     assert 'document.createElement("summary")' in html
     assert "group.open = Boolean(q) || openSections.has(sec.slug)" in html
@@ -70,14 +71,17 @@ def test_root_readme_is_default_home_and_title_link_target(tmp_path: Path) -> No
     assert payload["home"]["body"] == "# Home page\n"
     assert [item["title"] for item in payload["root_items"]] == ["Overview"]
     assert 'id="siteHome"' in html
-    assert "if (homeSlug) homeLink.href = `#/${homeSlug}`" in html
+    assert 'id="mobileSiteHome"' in html
+    assert "if (homeSlug)" in html
+    assert 'homeLink.href = `#/${homeSlug}`' in html
+    assert 'mobileHomeLink.href = `#/${homeSlug}`' in html
     assert "pagesBySlug.set(tree.home.slug, tree.home)" in html
     assert "window.__DOCS__.home.slug" in html
     generated_at = datetime.fromisoformat(payload["generated_at"].replace("Z", "+00:00"))
     assert generated_at.utcoffset() == timezone.utc.utcoffset(generated_at)
     assert '<footer id="homeFooter"' in html
     assert "page.slug === window.__DOCS__.home.slug" in html
-    assert '.slice(0, -5)' in html
+    assert ".slice(0, -5)" in html
     assert '+ " UTC"' in html
 
 
@@ -116,7 +120,7 @@ def test_generated_pages_include_local_toc_and_callout_rendering(tmp_path: Path)
     assert "function renderTableOfContents(page)" in html
     assert "heading-${base}-${suffix++}" in html
     assert "function enhanceCallouts()" in html
-    assert 'callout-${type}' in html
+    assert "callout-${type}" in html
     assert ".callout-warning" in html
 
 
@@ -163,8 +167,8 @@ def test_custom_primary_color_supports_neutral_light_and_dark_themes(
     accents = re.findall(r"--accent: (#[0-9a-f]{6});", html)
     assert accents[0] == "#174ea6"
     assert accents[1] != accents[0]
-    assert "--bg: #181818;" in html
-    assert "--bg-sidebar: #202020;" in html
+    assert "--bg: #09090b;" in html
+    assert "--bg-sidebar: #111114;" in html
     assert "__PRIMARY_" not in html
 
 
