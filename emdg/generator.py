@@ -18,6 +18,7 @@ def _serialize_item(item: DocItem) -> dict:
         "title": item.title,
         "emoji": item.emoji,
         "slug": item.slug,
+        "path": item.relative_path.as_posix(),
         "order": item.order,
         "description": item.description,
         "tags": item.tags,
