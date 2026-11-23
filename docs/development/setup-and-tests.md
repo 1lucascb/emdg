@@ -21,6 +21,10 @@ python -m pip install -e ".[test]"
 python -m pytest
 ```
 
+> [!TIP]
+> To build the technical documentation without scanning the repository's
+> source files, point the CLI at `docs/`: `python -m emdg docs --output docs.html`.
+
 The test modules are organized by package responsibility:
 
 | Test module | Coverage |
