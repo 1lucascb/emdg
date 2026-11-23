@@ -30,6 +30,8 @@ from public CDNs.
   watching, and local serving.
 - [Frontmatter format](#/reference/frontmatter-format) specifies the supported
   metadata syntax and section helper files.
+- [Callout markers](#/reference/markers) lists the supported blockquote
+  markers and shows how they appear in generated pages.
 - [Development and tests](#/development/setup-and-tests) explains local
   setup, test coverage, and the repository layout.
 - [GitHub Pages deployment](#/development/github-pages) explains the

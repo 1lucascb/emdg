@@ -163,8 +163,9 @@ def test_generated_pages_include_local_toc_and_callout_rendering(tmp_path: Path)
     assert ".callout-warning" in html
     assert r"match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i)" in html
     assert 'const icons = { note: "ℹ️", tip: "💡", important: "❗", warning: "⚠️", caution: "⛔" }' in html
-    assert "label.textContent = icons[type]" in html
-    assert 'label.setAttribute("aria-label", type)' in html
+    assert 'label.textContent = `${icons[type]} ${type.toUpperCase()}`' in html
+    assert 'label.setAttribute("aria-label", type.toUpperCase())' in html
+    assert "gap: 0.45rem" in html
 
 
 def test_escapes_script_closers_in_embedded_markdown(tmp_path: Path) -> None:
