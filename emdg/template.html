@@ -448,6 +448,9 @@
     #content .callout-warning { --callout-color: var(--callout-warning); }
     #content .callout-caution { --callout-color: var(--callout-caution); }
     #content .callout-title {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
       margin: 0 0 0.35rem;
       color: var(--callout-color);
       font-size: 1rem;
@@ -748,9 +751,9 @@
         quote.classList.add("callout", `callout-${type}`);
         const label = document.createElement("div");
         label.className = "callout-title";
-        label.textContent = icons[type];
-        label.setAttribute("aria-label", type);
-        label.title = type;
+        label.textContent = `${icons[type]} ${type.toUpperCase()}`;
+        label.setAttribute("aria-label", type.toUpperCase());
+        label.title = type.toUpperCase();
         quote.prepend(label);
 
         let charactersToRemove = marker[0].length;
