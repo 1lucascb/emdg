@@ -27,6 +27,10 @@ The output parent directory is not created automatically. Writing fails if it
 does not exist. Invalid themes and primary colors raise `ValueError`. The
 primary color must use `#RGB` or `#RRGGBB` syntax.
 
+> [!NOTE]
+> Markdown bodies are embedded in the generated file and rendered in the
+> browser; generation does not produce a separate HTML page per document.
+
 ## Theme colors
 
 The CLI accepts the primary accent with `--primary-color`; the API accepts it
@@ -60,6 +64,10 @@ The selected light/dark theme is saved in browser `localStorage` under
 `emdg-theme`. The generated timestamp is displayed on the home page.
 
 ## Dependencies and trust boundary
+
+> [!CAUTION]
+> Treat Markdown as trusted input before publishing. Raw HTML in a source page
+> can run in the generated site's browser context.
 
 Tailwind CSS, Marked, Highlight.js, and Mermaid are loaded from public CDNs.
 Without network access, the source text remains embedded, but styling and
